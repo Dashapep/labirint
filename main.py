@@ -46,7 +46,7 @@ def start_screen():
 
 
 tile_images = {'wall': load_image('box.png'), 'empty': load_image('grass.png'), 'good': load_image('good.png'),
-               'bad': load_image('bad.png')}
+               'bad': load_image('bad.png'), 'dark': load_image('dark.png')}
 player_image = load_image('dog.png', -1)
 
 tile_width = tile_height = 16
@@ -58,24 +58,51 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
+class Darknes(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(darknes_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.lightrect = pygame.Rect((pos_x - 2 * tile_width, pos_y - 2 * tile_height, 5 * tile_width, 5 * tile_height))
 
     def update(self, x, y):
         global time
         if 0 <= self.rect.y + y < height and 0 <= self.rect.x + x < width and \
                 level_map[(self.rect.y + y) // tile_height][(self.rect.x + x) // tile_width] in ('.', '@', ')', '('):
             self.rect = self.rect.move(x, y)
+            # self.lightrect = pygame.Rect((x - 2 * tile_width, y - 2 * tile_height, 5 * tile_width, 5 * tile_height))
+            self.lightrect = self.lightrect.move(x, y)
             if level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] == ')':
                 time += 15
+                remove_bonus()
+                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'
             elif level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] == '(':
                 time -= 15
+                remove_bonus()
+                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'
             else:
                 pass
+            remove_dark()
+
+def remove_bonus():
+    for bonus_elem in tiles_group:
+        if player.rect.collidepoint(bonus_elem.rect.center):
+            x = bonus_elem.rect.x // 16
+            y = bonus_elem.rect.y // 16
+            bonus_elem.kill()
+            Tile('empty', x, y)
+
+def remove_dark():
+    for dark_elem in darknes_group:
+        if player.lightrect.collidepoint(dark_elem.rect.center):
+            dark_elem.kill()
+
 
 
 clock = pygame.time.Clock()
@@ -83,6 +110,7 @@ clock = pygame.time.Clock()
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+darknes_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 
 
@@ -148,6 +176,7 @@ def generate_level(level):
                 Tile('good', x, y)
             elif level[y][x] == '(':
                 Tile('bad', x, y)
+            Darknes('dark', x, y)
     return new_player, x, y
 
 
@@ -158,6 +187,7 @@ win = False
 time = 180
 Show_timer(time)
 pygame.time.set_timer(pygame.USEREVENT, 1000)
+remove_dark()
 while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -178,6 +208,7 @@ while run:
     clock.tick(50)
     screen.fill((0, 0, 0))
     tiles_group.draw(screen)
+    darknes_group.draw(screen)
     player_group.draw(screen)
     Show_timer(time)
     pygame.display.flip()
