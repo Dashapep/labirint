@@ -4,24 +4,17 @@ import sys
 import time
 import random
 
-# fail = input()
-# fail = 'lab+gb.png'
-# зададим список доступных лабиринтов
-spisok = ['lab1+gb.png', 'lab2+gb.png', 'lab3+gb.png', 'lab4+gb.png', 'lab5+gb.png', 'lab6+gb.png']
-fail = 'lab1+gb.png'
-
 pygame.init()
 size = width, height = 85 * 16, 50 * 16
-# screen = pygame.display.set_mode(size)
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption('Program')
 FPS = 1
 
 
+
 def terminate():
     pygame.quit()
     sys.exit()
-
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('imgs', name)
@@ -36,9 +29,59 @@ def load_image(name, colorkey=None):
 
 
 def start_screen():
-    fon = load_image('fon.jpg')
-    screen.blit(pygame.transform.scale(fon, (width, height)), (0, 0))
+    w, h = pygame.display.get_surface().get_size()
+    fon = load_image('заставка.png')
+    # screen.blit(pygame.transform.scale(fon, (width, height)), (0, 0))
+    screen.blit(fon, (w // 2 - 400, h // 2 - 400))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
 
+def between_screen():
+    screen.fill((0, 0, 0))
+    w, h = pygame.display.get_surface().get_size()
+    fon = load_image('серединная_заставка.png')
+    font = pygame.font.Font(None, 40)
+    screen.blit(fon, (w // 2 - 400, h // 2 - 400))
+    text = font.render("Вы прошли " + str(yroven) + " уровень", True, (100, 255, 100))
+    screen.blit(text, (w // 2 - 400 + 100, h // 2 - 400 + 100))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
+
+def looser_screen():
+    screen.fill((0, 0, 0))
+    w, h = pygame.display.get_surface().get_size()
+    fon = load_image('проигрышная_заставка.png')
+    font = pygame.font.Font(None, 40)
+    screen.blit(fon, (w // 2 - 400, h // 2 - 400))
+    text = font.render("Вы не прошли " + str(yroven) + " уровень", True, (100, 255, 100))
+    screen.blit(text, (w // 2 - 400 + 100, h // 2 - 400 + 250))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                return
+        pygame.display.flip()
+        clock.tick(FPS)
+
+def winner_screen():
+    screen.fill((0, 0, 0))
+    w, h = pygame.display.get_surface().get_size()
+    fon = load_image('победная_заставка.png')
+    font = pygame.font.Font(None, 40)
+    screen.blit(fon, (w // 2 - 400, h // 2 - 400))
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -119,7 +162,7 @@ def remove_dark():
 
 
 clock = pygame.time.Clock()
-# start_screen()
+start_screen()
 
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
@@ -173,12 +216,7 @@ def load_level(filename):
     return karta
 
 
-# global level_map
-# filename = "data/" + filename
-# with open(filename, 'r') as mapFile:
-#     level_map = [line.strip() for line in mapFile]
-# max_width = max(map(len, level_map))
-# return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
 
 def Show_timer(time):
     font = pygame.font.Font(None, 30)
@@ -186,12 +224,14 @@ def Show_timer(time):
     tvremya = font.render(str(vremya), True, (100, 255, 100))
     textvremya = font.render('Прошло: ', True, (100, 255, 100))
     texttime = font.render('Осталось: ', True, (255, 100, 100))
+    yrov = font.render('Уровень ' + str(yroven) + ' / 6', True, (100, 100, 255))
     text_x = width - 80
     text_y = 20
     screen.blit(text, (text_x, text_y))
     screen.blit(texttime, (text_x - 100, text_y))
     screen.blit(tvremya, (text_x, text_y + 30))
     screen.blit(textvremya, (text_x - 100, text_y + 30))
+    screen.blit(yrov, (text_x - 100, text_y + 60))
     # pygame.draw.rect(screen, (0, 255, 0), (text_x - 10, text_y - 10,
     #                                        text_w + 20, text_h + 20), 1)
 
@@ -211,53 +251,71 @@ def generate_level(level):
                 Tile('good', x, y)
             elif level[y][x] == '(':
                 Tile('bad', x, y)
-            if not (x <= 1 or y <= 1 or x >= len(level[y]) - 2 or y >= len(level) - 2):
+            if not (x < 1 or y < 1 or x >= len(level[y]) - 1 or y >= len(level) - 1):
                 Darknes('dark', x, y)
     return new_player, x, y
 
-
-level_map = load_level(fail)
-player, level_x, level_y = generate_level(level_map)
-run = True
-win = False
-time = 180
-vremya = 0
-Show_timer(time)
-pygame.time.set_timer(pygame.USEREVENT, 1000)
-remove_dark()
-while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        key = pygame.key.get_pressed()
-        if key[pygame.K_DOWN]:
-            player.update(0, tile_height)
-        if key[pygame.K_UP]:
-            player.update(0, -tile_height)
-        if key[pygame.K_LEFT]:
-            player.update(-tile_width, 0)
-        if key[pygame.K_RIGHT]:
-            player.update(tile_width, 0)
-        if key[pygame.K_ESCAPE]:
-            run = False
-        if key[pygame.K_F10]:
-            for dark_elem in darknes_group:
-                dark_elem.kill()
-
-        if event.type == pygame.USEREVENT:
-            time -= 1
-            if time <= 0:
-                run = False
-            vremya += 1
-        if player.y >= level_y or player.x >= level_x:
-            run = False
-            win = True
-    clock.tick(50)
-    screen.fill((0, 0, 0))
-    tiles_group.draw(screen)
-    darknes_group.draw(screen)
-    player_group.draw(screen)
+# зададим список доступных лабиринтов
+spisok = ['lab1.png', 'lab2.png', 'lab3.png', 'lab4.png', 'lab5.png', 'lab6.png']
+random.shuffle(spisok)
+yroven = 0
+for fail in spisok:
+    level_map = load_level(fail)
+    player, level_x, level_y = generate_level(level_map)
+    run = True
+    win = False
+    time = 240
+    vremya = 0
     Show_timer(time)
-    pygame.display.flip()
+    pygame.time.set_timer(pygame.USEREVENT, 1000)
+    remove_dark()
+    yroven += 1
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            key = pygame.key.get_pressed()
+            if key[pygame.K_DOWN]:
+                player.update(0, tile_height)
+            if key[pygame.K_UP]:
+                player.update(0, -tile_height)
+            if key[pygame.K_LEFT]:
+                player.update(-tile_width, 0)
+            if key[pygame.K_RIGHT]:
+                player.update(tile_width, 0)
+            if key[pygame.K_ESCAPE]:
+                run = False
+            if key[pygame.K_F10]:
+                for dark_elem in darknes_group:
+                    dark_elem.kill()
+            if key[pygame.K_F11]:
+                win = True
+                run = False
+                break
 
+            if event.type == pygame.USEREVENT:
+                time -= 1
+                if time <= 0:
+                    run = False
+                vremya += 1
+            if player.y >= level_y or player.x >= level_x:
+                run = False
+                win = True
+        clock.tick(50)
+        screen.fill((0, 0, 0))
+        tiles_group.draw(screen)
+        darknes_group.draw(screen)
+        player_group.draw(screen)
+        Show_timer(time)
+        pygame.display.flip()
+
+    level_map = []
+    player.kill()
+    if not win:
+        looser_screen()
+        break
+    else:
+        between_screen()
+if win:
+    winner_screen()
 terminate()
