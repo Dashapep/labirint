@@ -11,13 +11,13 @@ pygame.display.set_caption('Program')
 FPS = 1
 
 
-
 def terminate():
     pygame.quit()
     sys.exit()
 
+
 def load_image(name, colorkey=None):
-    fullname = os.path.join('imgs', name)
+    fullname = os.path.join('imgs', name)  # папка с картинками
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
@@ -28,10 +28,9 @@ def load_image(name, colorkey=None):
     return image
 
 
-def start_screen():
+def start_screen():  # загрузка главной заставки
     w, h = pygame.display.get_surface().get_size()
     fon = load_image('заставка.png')
-    # screen.blit(pygame.transform.scale(fon, (width, height)), (0, 0))
     screen.blit(fon, (w // 2 - 400, h // 2 - 400))
     while True:
         for event in pygame.event.get():
@@ -42,7 +41,8 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-def between_screen():
+
+def between_screen():  # закгрузка переходной заставки между уровнями
     screen.fill((0, 0, 0))
     w, h = pygame.display.get_surface().get_size()
     fon = load_image('серединная_заставка.png')
@@ -59,7 +59,8 @@ def between_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-def looser_screen():
+
+def looser_screen():  # загрузка заставки в случае проигрыша
     screen.fill((0, 0, 0))
     w, h = pygame.display.get_surface().get_size()
     fon = load_image('проигрышная_заставка.png')
@@ -76,7 +77,8 @@ def looser_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-def winner_screen():
+
+def winner_screen():  # загрузка заставки в случае выигрыша
     screen.fill((0, 0, 0))
     w, h = pygame.display.get_surface().get_size()
     fon = load_image('победная_заставка.png')
@@ -106,7 +108,7 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
 
-class Darknes(pygame.sprite.Sprite):
+class Darknes(pygame.sprite.Sprite):  # подключение темноты в лабиринте
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(darknes_group, all_sprites)
         self.image = tile_images[tile_type]
@@ -130,15 +132,17 @@ class Player(pygame.sprite.Sprite):
         if 0 <= self.rect.y + y < height and 0 <= self.rect.x + x < width and \
                 level_map[(self.rect.y + y) // tile_height][(self.rect.x + x) // tile_width] in ('.', '@', ')', '('):
             self.rect = self.rect.move(x, y)
-            self.lightrect = self.lightrect.move(x, y)
-            if level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] == ')':
-                time += 15
+            self.lightrect = self.lightrect.move(x, y)  # светлое пространство вокруг героя
+            if level_map[(self.rect.y) // tile_height][
+                (self.rect.x) // tile_width] == ')':  # если герой наступил на зеленый бонус
+                time += 15  # таймер увеличивается на 15 секунд
                 remove_bonus()
-                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'
-            elif level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] == '(':
-                time -= 15
+                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'  # бонус удаляется с карты
+            elif level_map[(self.rect.y) // tile_height][
+                (self.rect.x) // tile_width] == '(':  # если герой наступил на красный бонус
+                time -= 15  # таймер уменьшается на 15 секунд
                 remove_bonus()
-                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'
+                level_map[(self.rect.y) // tile_height][(self.rect.x) // tile_width] = '.'  # бонус удаляется с карты
             else:
                 pass
             self.x += dx
@@ -176,8 +180,8 @@ def load_level(filename):
     fullname = os.path.join('imgs', filename)
     a = Image.open(fullname)
     sh, d = a.size
-    count_good = 10
-    count_bad = 10
+    count_good = 10  # количество зеленых бонусов
+    count_bad = 10  # количество красных бонусов
     karta = []
     for y in range(5, d, 14):
         stroka = []
@@ -200,13 +204,13 @@ def load_level(filename):
         karta.append(stroka)
     shir_kart = len(karta[0])
     dlin_kart = len(karta)
-    while count_bad > 0:
+    while count_bad > 0:  # рандомное выставление 10 красных бонусов на карте
         x = random.randint(1, shir_kart - 2)
         y = random.randint(1, dlin_kart - 2)
         if karta[y][x] == '.':
             karta[y][x] = '('
             count_bad -= 1
-    while count_good > 0:
+    while count_good > 0:  # рандомное выставление 10 зеленых бонусов на карте
         x = random.randint(1, shir_kart - 2)
         y = random.randint(1, dlin_kart - 2)
         if karta[y][x] == '.':
@@ -216,9 +220,7 @@ def load_level(filename):
     return karta
 
 
-
-
-def Show_timer(time):
+def Show_timer(time):  # показ в левом верхнем углу  сколько прошло, осталось и номер уровня
     font = pygame.font.Font(None, 30)
     text = font.render(str(time), True, (255, 100, 100))
     tvremya = font.render(str(vremya), True, (100, 255, 100))
@@ -232,9 +234,6 @@ def Show_timer(time):
     screen.blit(tvremya, (text_x, text_y + 30))
     screen.blit(textvremya, (text_x - 100, text_y + 30))
     screen.blit(yrov, (text_x - 100, text_y + 60))
-    # pygame.draw.rect(screen, (0, 255, 0), (text_x - 10, text_y - 10,
-    #                                        text_w + 20, text_h + 20), 1)
-
 
 def generate_level(level):
     new_player, x, y = None, None, None
@@ -255,9 +254,10 @@ def generate_level(level):
                 Darknes('dark', x, y)
     return new_player, x, y
 
-# зададим список доступных лабиринтов
-spisok = ['lab1.png', 'lab2.png', 'lab3.png', 'lab4.png', 'lab5.png', 'lab6.png']
-random.shuffle(spisok)
+
+spisok = ['lab1.png', 'lab2.png', 'lab3.png', 'lab4.png', 'lab5.png',
+          'lab6.png']  # задается список доступных лабиринтов
+random.shuffle(spisok)  # перемешивается
 yroven = 0
 for fail in spisok:
     level_map = load_level(fail)
@@ -283,16 +283,15 @@ for fail in spisok:
                 player.update(-tile_width, 0)
             if key[pygame.K_RIGHT]:
                 player.update(tile_width, 0)
-            if key[pygame.K_ESCAPE]:
+            if key[pygame.K_ESCAPE]:  # при нажатии esc игра заканчивается с проигрышем
                 run = False
-            if key[pygame.K_F10]:
+            if key[pygame.K_F10]:  # при нажатии ctrl + F10 весь лабирит становится светлым
                 for dark_elem in darknes_group:
                     dark_elem.kill()
-            if key[pygame.K_F11]:
+            if key[pygame.K_F11]:  # при нажатии ctrl + F11 игра заканчивается с победой
                 win = True
                 run = False
                 break
-
             if event.type == pygame.USEREVENT:
                 time -= 1
                 if time <= 0:
