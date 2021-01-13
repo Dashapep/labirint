@@ -19,7 +19,7 @@ def terminate():
 
 # функция для загрузки изображений
 def load_image(name, colorkey=None):
-    fullname = os.path.join('imgs', name)  # папка с картинками
+    fullname = os.path.join('imgs', name)
     image = pygame.image.load(fullname).convert()
     if colorkey is not None:
         if colorkey == -1:
@@ -94,7 +94,7 @@ def winner_screen():
     screen.fill((0, 0, 0))
     w, h = pygame.display.get_surface().get_size()
     fon = load_image('победная_заставка.png')
-    font = pygame.font.Font(None, 40)
+    # font = pygame.font.Font(None, 40)
     screen.blit(fon, (w // 2 - 400, h // 2 - 400))
     while True:
         for event in pygame.event.get():
